@@ -1,7 +1,8 @@
 import { Typography, Grid, Paper } from "@mui/material";
+import { IndicatorValues } from "../components";
 import PropTypes from "prop-types";
 
-const Summary = ({ data }) => {
+const Summary = ({ data, money }) => {
 	return (
 		<>
 			<Paper
@@ -16,7 +17,21 @@ const Summary = ({ data }) => {
 					sx={{ marginTop: 2 }}
 					container
 					justifyContent={"space-around"}
-				></Grid>
+				>
+					<Grid item>
+						<Typography variant="h6">
+							Montant initial: {money.initial} $
+						</Typography>
+					</Grid>
+					<Grid item>
+						<Typography variant="h6">
+							Montant récurrent: {money.recurrent} $
+						</Typography>
+					</Grid>
+				</Grid>
+
+				{/* Table with the important values */}
+				<IndicatorValues data={data.indicators} />
 			</Paper>
 		</>
 	);
@@ -24,7 +39,8 @@ const Summary = ({ data }) => {
 
 // props validation
 Summary.propTypes = {
-	data: PropTypes.array.isRequired,
+	data: PropTypes.object.isRequired,
+	money: PropTypes.object.isRequired,
 };
 
 export default Summary;

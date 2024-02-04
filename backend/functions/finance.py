@@ -30,6 +30,10 @@ def volatilite(prix_action):
 
 def revenue(name, montantInitial, montantRecurant, financeTable):
     # variationsList = [["Date", "Montant Investi", "Revenue"]]
+    evolution = []
+    evolution.append(
+        [financeTable.index[0].strftime("%d/%m/%Y"), financeTable["Adj Close"].iloc[0]]
+    )
     variationsList = []
     variationsList.append(
         [financeTable.index[0].strftime("%d/%m/%Y"), montantInitial, montantInitial]
@@ -72,9 +76,20 @@ def revenue(name, montantInitial, montantRecurant, financeTable):
             [ind.strftime("%d/%m/%Y"), montantInvest, nbAction * prixAction + liquidite]
         )
 
+        evolution.append([ind.strftime("%d/%m/%Y"), prixAction])
+
     lastAdjClose = financeTable["Adj Close"].iloc[-1]
     revenue = nbAction * lastAdjClose + liquidite
     rendementMoyen = (revenue / montantInvest) - 1
+
+    # calculate the metrics
+    dateRange = financeTable.index[-1].year - financeTable.index[0].year
+    cagr_result = cagr(revenue, montantInitial, dateRange)
+    volatilite_result = volatilite(financeTable["Adj Close"])
+    ratioSharp_result = ratioSharp(rendementMoyen, 0.03, volatilite_result)
+    moyenne_result = moyenne(financeTable["Adj Close"])
+    ecartType_result = ecartType(financeTable["Adj Close"])
+    ecartInterquartille_result = ecartInterquartille(financeTable)
 
     return {
         "name": name,
@@ -82,6 +97,13 @@ def revenue(name, montantInitial, montantRecurant, financeTable):
         "revenue": revenue,
         "rendementMoyen": rendementMoyen,
         "variations": variationsList,
+        "cagr": cagr_result,
+        "volatilite": volatilite_result,
+        "ratioSharp": ratioSharp_result,
+        "moyenne": moyenne_result,
+        "ecartType": ecartType_result,
+        "ecartInterquartille": ecartInterquartille_result,
+        "evolution": evolution,
     }
 
 
@@ -132,7 +154,21 @@ def getData(indicators, startDate, endDate, montantInitial, montantRecurant):
         df = df.sort_values(by="date")
         df = df.fillna(0, inplace=False)
 
-    result = {"indicators": [], "variations": []}
+    evolutionDf = pd.DataFrame(
+        revenueStats[0]["evolution"],
+        columns=["date", f"{revenueStats[0]['name']}"],
+    )
+    if len(revenueStats) == 2:
+        evolutionDf2 = pd.DataFrame(
+            revenueStats[1]["evolution"],
+            columns=["date", f"{revenueStats[1]['name']}"],
+        )
+        evolutionDf = pd.merge(evolutionDf, evolutionDf2, on="date", how="outer")
+        evolutionDf["date"] = pd.to_datetime(evolutionDf["date"], format="%d/%m/%Y")
+        evolutionDf = evolutionDf.sort_values(by="date")
+        evolutionDf = evolutionDf.fillna(0, inplace=False)
+
+    result = {"indicators": [], "variations": [], "evolution": []}
 
     for i in range(len(revenueStats)):
         result["indicators"].append(
@@ -141,6 +177,12 @@ def getData(indicators, startDate, endDate, montantInitial, montantRecurant):
                 "montantInvest": revenueStats[i]["montantInvest"],
                 "revenue": revenueStats[i]["revenue"],
                 "rendementMoyen": revenueStats[i]["rendementMoyen"],
+                "cagr": revenueStats[i]["cagr"],
+                "volatilite": revenueStats[i]["volatilite"],
+                "ratioSharp": revenueStats[i]["ratioSharp"],
+                "moyenne": revenueStats[i]["moyenne"],
+                "ecartType": revenueStats[i]["ecartType"],
+                "ecartInterquartille": revenueStats[i]["ecartInterquartille"],
             }
         )
 
@@ -148,38 +190,8 @@ def getData(indicators, startDate, endDate, montantInitial, montantRecurant):
     variationsRes.insert(0, df.columns.tolist())
     result["variations"] = variationsRes
 
+    evolutionRes = evolutionDf.values.tolist()
+    evolutionRes.insert(0, evolutionDf.columns.tolist())
+    result["evolution"] = evolutionRes
+
     return result
-
-    # # calcule de cagr
-    # dateRange = data.index[-1].year - data.index[0].year
-    # cagr_result = cagr(
-    #     revenueStats["revenue"], revenueStats["montantInvest"], dateRange
-    # )
-
-    # # calcule de volatilite
-    # volatilite_result = volatilite(data["Adj Close"])
-
-    # # calcule de ratio de sharp
-    # rendementSansRisque = 0.03
-    # ratioSharp_result = ratioSharp(
-    #     revenueStats["rendementMoyen"], rendementSansRisque, volatilite_result
-    # )
-
-    # # calcule de la moyenne
-    # moyenne_result = moyenne(data["Adj Close"])
-
-    # # calcule de l'ecart type
-    # ecartType_result = ecartType(data["Adj Close"])
-
-    # # calcule de l'ecart interquartille
-    # ecartInterquartille_result = ecartInterquartille(data)
-
-    # revenueStats["indicator"] = indicator
-    # revenueStats["cagr"] = cagr_result
-    # revenueStats["volatilite"] = volatilite_result
-    # revenueStats["ratioSharp"] = ratioSharp_result
-    # revenueStats["moyenne"] = moyenne_result
-    # revenueStats["ecartType"] = ecartType_result
-    # revenueStats["ecartInterquartille"] = ecartInterquartille_result
-    # revenueStats["montantInitial"] = montantInitial
-    # revenueStats["montantRecurant"] = montantRecurant

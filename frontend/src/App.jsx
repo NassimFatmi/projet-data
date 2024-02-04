@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import {
+	ActionPriceEvolution,
 	DisplayIndicators,
 	LineGraph,
 	SearchIndicator,
@@ -58,8 +59,6 @@ const App = () => {
 				montantRecurant: money.recurrent.toString(),
 			};
 
-			console.log(body);
-
 			const response = await axios.post(`${API_URL}`, body, {
 				headers: {
 					"Content-Type": "application/json",
@@ -67,7 +66,41 @@ const App = () => {
 				},
 			});
 
+			console.log(response.data);
+
 			setData(response.data);
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Generate the regression
+	const [url, setUrl] = useState({
+		file: "",
+	});
+	const generateRegression = async () => {
+		// loading state
+		setLoading(true);
+
+		try {
+			// create the body
+			const body = {
+				indicator: indicators[0],
+				startDate: "2010-01-01",
+				endDate: "2023-01-25",
+			};
+
+			const response = await axios.post(`${API_URL}/reg`, body, {
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json",
+				},
+			});
+
+			console.log(response.data);
+			setUrl(response.data);
 		} catch (err) {
 			console.error(err);
 		} finally {
@@ -143,7 +176,7 @@ const App = () => {
 					</Typography>
 					{!data ? (
 						<Typography variant="body2">
-							Genrater le rapport pour visualiser l&apos;évolution de votre
+							Génerez le rapport pour visualiser l&apos;évolution de votre
 							portefeuille
 						</Typography>
 					) : (
@@ -152,7 +185,36 @@ const App = () => {
 				</Paper>
 
 				{/* Summary of the results */}
-				{data && <Summary data={data} />}
+				{data && <Summary money={money} data={data} />}
+
+				{/* Evolution de cours de l'action */}
+				{data && <ActionPriceEvolution data={data.evolution} />}
+
+				{/* Display regression */}
+				<Paper
+					variant="outlined"
+					sx={{
+						marginTop: 6,
+						padding: 2,
+						marginBottom: 6,
+					}}
+				>
+					<Typography variant="h5" marginBottom={2}>
+						Régression linéaire
+					</Typography>
+
+					<Grid item>
+						<Button
+							variant="outlined"
+							onClick={generateRegression}
+							disabled={indicators.length === 0}
+						>
+							{indicators.length === 0 ? 'Générer la régression': `Régression de ${indicators[0]}`}
+						</Button>
+					</Grid>
+					{url.file && <img width={"100%"} src={`${API_URL}/${url.file}`} />}
+				</Paper>
+				{/* Button to generate regression */}
 			</Container>
 		</LocalizationProvider>
 	);
