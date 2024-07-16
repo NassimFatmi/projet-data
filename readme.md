@@ -22,20 +22,20 @@ L'application se compose de deux parties : backend et frontend.
 
 # Pour installer un package, exécutez la commande suivante :
 
-$ pip install [NOM]
+`$ pip install [NOM]`
 
 # Pour lancer le serveur, exécutez les commandes suivantes :
 
-$ cd backend
-$ python main.py
+`$ cd backend`
+`$ python main.py`
 
 # Application web Frontend (React JS) :
 
 # Pour installer les dépendances de l'application, exécutez la commande suivante :
 
-$ cd frontend
-$ npm install
+`$ cd frontend`
+`$ npm install`
 
 # Pour lancer l'application, exécutez la commande suivante :
 
-$ npm run dev
+`$ npm run dev`
